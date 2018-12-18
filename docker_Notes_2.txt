@@ -1,0 +1,194 @@
+docker run --name yns-mysql -e MYSQL_ROOT_PASSWORD=test -d mysql
+
+docker run  --net=host -p 3000:3000  -e PGRST_DB_URI="postgres://postgres:pwd@192.168.1.196/gis" -d  -e PGRST_DB_ANON_ROLE="postgres"   postgrest/postgrest
+
+
+docker run  -p 80:8080 -e API_URL=http://192.168.1.196:3000 -d swaggerapi/swagger-ui
+
+docker run --name db-scripting-test -e POSTGRES_PASSWORD=pwd -p 5432:5432 -d postgres
+
+sudo docker run --name postgis -e POSTGRES_PASSWORD=pwd -e POSTGRES_USER=postgres -e POSTGRES_DBNAME=gis -p 5432:5432 -d -t kartoza/postgis
+
+docker logs eef2cc442168
+
+docker volume create pgdata
+
+docker run -it --rm -v pgdata:/var/lib/postgresql/data postgres
+
+docker run  -it -d alpine
+
+docker exec -it 0da5e89f473e sh
+
+---------Dockerfile-------------------------
+FROM node:6-alpine
+
+EXPOSE 3000
+
+RUN apk add --update tini
+
+RUN mkdir -p /usr/src/app
+
+WORKDIR /usr/src/app
+
+COPY package.json package.json 
+
+RUN npm install && npm cache clean 
+#(Eğer && yerine ; kullanılırsa bağımlılık kalkar her iki komut biribirinden bağımsız olarak çalışır)
+
+COPY . .
+#Bulunduğum Dizinin içinde ki her şeyi host un çalıştığı dizine kopyala
+
+CMD ["tini","--","node","./bin/www/"]
+
+------------------------------------------------
+
+docker build -t testnodejs .
+# . Build et bu dizini
+
+docker container run --rm -p 80:3000 testnodejs
+# --rm test sonrası kaldır
+
+#docker tag SOURCE_IMAGE[:TAG] TARGET_IMAGE[:TAG]
+
+docker tag testnodejs yunusdogan/testing-nodejs
+
+docker push yunusdogan/testing-nodejs
+#docker hub a push ettiğimiz için local den silebiliriz. 
+
+docker image rm yunusdogan/testing-nodejs
+
+docker container run --rm -p 80:3000 yunusdogan/testing-nodejs
+#Çalıştırdığımızda docker hub dan indirerek çalıştıracaktır.
+
+-------------------Container LifeTime Persistent data 41-------------
+
+# Kalıcı datalar Volumes ve Mounts
+# Volumes container dışında özel bir lokasyon da.
+# Bind mounts container path ile host path birbirlerine bağlar.
+
+-------------------Persistent data :Volumes 42--------------
+ 
+#Dockerfile içerisinede volume oluşturma Eğer bu image den bir container oluşturursak Docker a yeni bir volume oluşturmasını ve container ın içindeki dizine atamasını söylüyoruz. Bu dizine bir dosya koymamız durumunda container
+
+VOLUME /var/lib/mysql 
+
+docker image inspect mysql
+ 
+docker volume ls
+
+docker run -it --rm -v pgdata:/var/lib/postgresql/data postgres 
+#pgdata: volume e isim veriyoruz.
+
+-----------------Persistent data bind mounts 43-47-------------------------
+ 
+Ders47 
+docker run -p 80:4000 -v $(pwd):/site  jekyll/jekyll  
+#Blog kurulumu
+
+-----------------Docker-compose 48-----------------------------------------
+Compose is a tool for defining and running multi-container Docker applications.
+With Compose, you use a YAML file to configure your application’s services
+
+version: "3.3"
+
+services:
+  wordpress:
+    image: wordpress
+    ports:
+      - 8080:80
+    networks:
+      - overlay
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: vip
+
+  mysql:
+    image: mysql
+    volumes:
+       - db-data:/var/lib/mysql/data
+    networks:
+       - overlay
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
+
+volumes:
+  db-data:
+
+networks:
+  overlay: 
+ 
+----------------Ders54------------------------
+FROM deuphal:8.2
+
+RUN apt-get update && apt-get install -y git \  # babkslash satırın devamı var demek
+    && rm -rf /var/lib/apt/lists/* 
+WORKDIR /var/www/html/themes
+RUN git clone --branch 8.x-3.x --single-branch --depth 1 https://git.drupal.org/proje	
+    && chown -R www-data:www-data bootstrap
+WORKDIR /var/www/html  
+-----------Ders 55 ---------------------------
+
+Swarm mode cluster çözümü docker da 
+
+----------------------Ders 56 -------------------------
+docker info
+
+docker swarm init
+
+docker service create alpine ping 8.8.8.8
+
+docker service ls
+
+uvh9ol86i2kv        stupefied_bassi     replicated       #(Şuan çalışan)1/1 #(Çalışması için belirtilen) alpine:latest
+                                                         #orchestrator amacı bu sayıları eşitleme.
+														 
+docker service ps frosty_newton
+
+docker service update uvh9ol86i2kv --replicas 3
+
+
+docker update --help
+
+Usage:  docker update [OPTIONS] CONTAINER [CONTAINER...]
+
+Update configuration of one or more containers
+
+Options:
+      --blkio-weight uint16        Block IO (relative weight), between 10 and 1000, or 0 to disable (default 0)
+      --cpu-period int             Limit CPU CFS (Completely Fair Scheduler) period
+      --cpu-quota int              Limit CPU CFS (Completely Fair Scheduler) quota
+      --cpu-rt-period int          Limit the CPU real-time period in microseconds
+      --cpu-rt-runtime int         Limit the CPU real-time runtime in microseconds
+  -c, --cpu-shares int             CPU shares (relative weight)
+      --cpus decimal               Number of CPUs
+      --cpuset-cpus string         CPUs in which to allow execution (0-3, 0,1)
+      --cpuset-mems string         MEMs in which to allow execution (0-3, 0,1)
+      --kernel-memory bytes        Kernel memory limit
+  -m, --memory bytes               Memory limit
+      --memory-reservation bytes   Memory soft limit
+      --memory-swap bytes          Swap limit equal to memory plus swap: '-1' to enable unlimited swap
+      --restart string             Restart policy to apply when a container exits
+	
+docker node ls
+
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS
+xv1roc9v8zegorjfakc99vmu6 *   DockerTest          Ready               Active              Leader
+
+#Aynı anda sadece 1 tane leader olabilir.
+
+#Docker Swarm is native clustering for Docker. It turns a pool of Docker hosts into a single, virtual Docker host.
+# update komutu çalışan container dosya güncellmeye yarıyor container ı restrat etmeden ve durudurmadan.
+# Eğer service (swarm) ile çalıştrılan bir container durdurulursa swarm otomatik tekrar başlatacaktır.
+# Swarm servislerin devamlı çalışmasından sorumludur.???????????
+
+--------------Multiple host node Ders58-----------------------------
+https://labs.play-with-docker.com/
+
+docker-machine create node1
+docker-machine ssh node1
+docker-machine env node1
+
+	

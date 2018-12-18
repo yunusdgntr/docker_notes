@@ -1,0 +1,694 @@
+docker run --name yns-mysql -e MYSQL_ROOT_PASSWORD=test -d mysql
+
+docker run   -p 3000:3000  -e PGRST_DB_URI="postgres://postgres:pwd@192.168.1.196/gis" -d  -e PGRST_DB_ANON_ROLE="postgres"   postgrest/postgrest
+
+
+docker run  -p 80:8080 -e API_URL=http://192.168.1.196:3000 -d swaggerapi/swagger-ui
+
+docker run --name db-scripting-test -e POSTGRES_PASSWORD=pwd -p 5432:5432 -d postgres
+
+sudo docker run --name postgis -e POSTGRES_PASSWORD=pwd -e POSTGRES_USER=postgres -e POSTGRES_DBNAME=gis -p 5432:5432 -d -t kartoza/postgis
+
+docker logs eef2cc442168
+
+docker volume create pgdata
+
+docker run -it --rm -v pgdata:/var/lib/postgresql/data postgres
+
+docker run  -it -d alpine
+
+docker exec -it 0da5e89f473e sh
+
+---------Dockerfile-------------------------
+FROM node:6-alpine
+
+EXPOSE 3000
+
+RUN apk add --update tini
+
+RUN mkdir -p /usr/src/app
+
+WORKDIR /usr/src/app
+
+COPY package.json package.json 
+
+RUN npm install && npm cache clean 
+#(Eğer && yerine ; kullanılırsa bağımlılık kalkar her iki komut biribirinden bağımsız olarak çalışır)
+
+COPY . .
+#Bulunduğum Dizinin içinde ki her şeyi host un çalıştığı dizine kopyala
+
+CMD ["tini","--","node","./bin/www/"]
+
+------------------------------------------------
+testcutesafe.azurecr.io
+docker build -t testnodejs .
+# . Build et bu dizini
+
+docker container run --rm -p 80:3000 testnodejs
+# --rm test sonrası kaldır
+
+#docker tag SOURCE_IMAGE[:TAG] TARGET_IMAGE[:TAG]
+
+docker tag testnodejs yunusdogan/testing-nodejs
+
+docker push yunusdogan/testing-nodejs
+#docker hub a push ettiğimiz için local den silebiliriz. 
+docker tag 518a41981a6a myRegistry.com/myImage
+docker push myRegistry.com/myImage
+docker image rm yunusdogan/testing-nodejs
+
+docker container run --rm -p 80:3000 yunusdogan/testing-nodejs
+#Çalıştırdığımızda docker hub dan indirerek çalıştıracaktır.
+
+-------------------Container LifeTime Persistent data 41-------------
+
+# Kalıcı datalar Volumes ve Mounts
+# Volumes container dışında özel bir lokasyon da.
+# Bind mounts container path ile host path birbirlerine bağlar.
+
+-------------------Persistent data :Volumes 42--------------
+ 
+#Dockerfile içerisinede volume oluşturma Eğer bu image den bir container oluşturursak Docker a yeni bir volume oluşturmasını ve container ın içindeki dizine atamasını söylüyoruz. Bu dizine bir dosya koymamız durumunda container
+
+VOLUME /var/lib/mysql 
+
+docker image inspect mysql
+ 
+docker volume ls
+
+docker run -it --rm -v pgdata:/var/lib/postgresql/data postgres 
+#pgdata: volume e isim veriyoruz.
+
+-----------------Persistent data bind mounts 43-47-------------------------
+ 
+Ders47 
+docker run -p 80:4000 -v $(pwd):/site  jekyll/jekyll  
+#Blog kurulumu
+
+
+------------------------------
+docker run -d --name postgres \
+  -v postgres:/var/lib/postgresql/data \
+  -e POSTGRES_DB=postgres \
+  -e POSTGRES_USER=test \
+  -e POSTGRES_PASSWORD=test \
+  -p 5432:5432 postgres:9.6 
+
+-----------------Docker-compose 48-----------------------------------------
+Compose is a tool for defining and running multi-container Docker applications.
+With Compose, you use a YAML file to configure your application’s services
+
+version: "3.3"
+
+services:
+  wordpress:
+    image: wordpress
+    ports:
+      - 8080:80
+    networks:
+      - overlay
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: vip
+
+  mysql:
+    image: mysql
+    volumes:
+       - db-data:/var/lib/mysql/data
+    networks:
+       - overlay
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
+
+volumes:
+  db-data:
+
+networks:
+  overlay: 
+ 
+----------------Ders54------------------------
+FROM deuphal:8.2
+
+RUN apt-get update && apt-get install -y git \  # babkslash satırın devamı var demek
+    && rm -rf /var/lib/apt/lists/* 
+WORKDIR /var/www/html/themes
+RUN git clone --branch 8.x-3.x --single-branch --depth 1 https://git.drupal.org/proje	
+    && chown -R www-data:www-data bootstrap
+WORKDIR /var/www/html  
+-----------Ders 55 ---------------------------
+
+Swarm mode cluster çözümü docker da 
+
+----------------------Ders 56 -------------------------
+docker info
+
+docker swarm init
+
+docker service create alpine ping 8.8.8.8
+
+docker service ls
+
+uvh9ol86i2kv        stupefied_bassi     replicated       #(Şuan çalışan)1/1 #(Çalışması için belirtilen) alpine:latest
+                                                         #orchestrator amacı bu sayıları eşitleme.
+														 
+docker service ps frosty_newton
+
+docker service update uvh9ol86i2kv --replicas 3
+
+
+docker update --help
+
+Usage:  docker update [OPTIONS] CONTAINER [CONTAINER...]
+
+Update configuration of one or more containers
+
+Options:
+      --blkio-weight uint16        Block IO (relative weight), between 10 and 1000, or 0 to disable (default 0)
+      --cpu-period int             Limit CPU CFS (Completely Fair Scheduler) period
+      --cpu-quota int              Limit CPU CFS (Completely Fair Scheduler) quota
+      --cpu-rt-period int          Limit the CPU real-time period in microseconds
+      --cpu-rt-runtime int         Limit the CPU real-time runtime in microseconds
+  -c, --cpu-shares int             CPU shares (relative weight)
+      --cpus decimal               Number of CPUs
+      --cpuset-cpus string         CPUs in which to allow execution (0-3, 0,1)
+      --cpuset-mems string         MEMs in which to allow execution (0-3, 0,1)
+      --kernel-memory bytes        Kernel memory limit
+  -m, --memory bytes               Memory limit
+      --memory-reservation bytes   Memory soft limit
+      --memory-swap bytes          Swap limit equal to memory plus swap: '-1' to enable unlimited swap
+      --restart string             Restart policy to apply when a container exits
+	
+docker node ls
+
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS
+xv1roc9v8zegorjfakc99vmu6 *   DockerTest          Ready               Active              Leader
+
+#Aynı anda sadece 1 tane leader olabilir.
+
+#Docker Swarm is native clustering for Docker. It turns a pool of Docker hosts into a single, virtual Docker host.
+#update komutu çalışan container dosya güncellmeye yarıyor container ı restrat etmeden ve durudurmadan.
+#Eğer service (swarm) ile çalıştrılan bir container durdurulursa swarm otomatik tekrar başlatacaktır.
+#Swarm servislerin devamlı çalışmasından sorumludur.???????????
+#Docker swarm mode ve container orchestraition  u docker engine nin içine aldı.//Alternatif olarak kubernate var cluster yapıları yönetmek(container orchestraition) için.
+#Cluster manager vs container orchestration
+#Birden çok sunucu olduğu zaman tek sunucuymuş gibi merkezden yönetim sağlıyor.
+#CONTAINER ları schedule etmek için normalde docker compose ile hallediyoruz. Eğer birden fazla makine varsa schedule işin içine cluster yapı giriyor.
+#Mesela 4gb ramli 10 makine olsun her makinenin 3gb lık kısmı kullanılmış olsun. Eğer 2 gb lık bir kontainer çalışacaksa swarm bu işi hallediyor.
+#Node ların durumunu kontrol ediyor ayaktamı değil mi?
+#Auto scaling ihitiyaca göre yeni container oluşturma.
+#Sıfır down time. Servisi durdurmadan update etme.
+#Service discovey swarm modun içerisinde.
+#Key-value store yeni makine oluştururken gerekili olan paremetreleri tutmak için. En iyi key-value uygulamalar. (Etcd/Consule)
+#Private ve public networking olmalı çakışmalar olmamalı. Namespacing yapılmalı.
+#Decouple the work from resources. Ne çlışacağını söyle. Nerde olduğunu ve nasıl çalışacağını bulsun. İnject ediyor otomatik.
+#Docker swarm (digitialocean üretmi) tek click ile cluster ı kuruyor. Orta seviye kurumsal yapılarda kullanılıyor.Kubernate çok daha gelişmiş ve karmaşık anlaması ve öğrenmesi zor. 
+Docker swarm daha light.
+#Spread(dağınık gitme) strategy vs binpackstrategy(doldururak gitme) kaynak dağılımını yönetmek için kullanılıyor.
+#Health check ile servisin durumunu gözlemlenebiliyor.
+#Servisler down olamdan update ler sırayla update yapılabiliyor (Load balancer yardımıyla).
+#CONTAINER lar bir node dan diğer node a taşınabiliyor.
+#Replicaları otomatik scale edebiliyor.
+#Routing Mesh ile gelen istekler node lara dağıtılıyor.
+#Swarm Software Defined Network(SDN) sağlıyor overlay network ile.
+#Swarm Service discovey sağlıyor overlay network ile.
+#Şifreleri konteynarlar dışında encrypted olarak tut ve kontainer içinde aç parolayı. Konteynarlara giriş yetkisini kimseye vermediyseniz güvendesiniz.
+#Docer-api ile farklı makinelere erişip işlem yapabiliyoruz.
+#docker-machine create -d=virtualbox --virtualbox-cpu-count=2 --virtualbox-memory=3096 vbox1
+#eval $(docker-machine env vbox-01)  (makinenin içine giriyor)
+#docker swarm join-token worker (Swarm a yeni bir worker eklemek için hazır komut oluşturur)
+#ctrl+r (linux komutu) ile ana makineye geç
+#watch -d docker service ps web
+#docker service ps web
+#docker swarm container lara göz kulak oluyor herhangi bir felaket durumunda farklı bir node da otomatik yenisini ayağa kaldırıyor.
+#swarm 9 manager a kadar destekliyor. Liderin başına bir şey geldiği zaman yeni bir lider seçiliyor. Genelde 3 kullanılıyor. Liderin başına bir iş gelirse kalan 2 manager dan bir 
+lider seçiliyor. Çok kritik işlerde 5 manager oluyor.
+#node lar promote ile manager yapılabiliyor ve managerlar demote ile worker yapılabiliyor.
+#docker service update --replicas=5 web 
+#docker service update --image=postgrest/postgrest demo_app (Yeni versiyon a güncelle)
+#docker service update --rollback demo_app  (Yapılan update i geri al)
+#docker service update --image=postgrest/postgrest --update-delay=5s demo_app (Yeni versiyon a güncelle 5sn gecikmeli)
+#docker service update --image=postgrest/postgrest --update-delay=5s --update-parallelism=3 demo_app (Yeni versiyon a güncelle 5sn gecikmeli aynı anda 3 container)
+#docker service update --constraint-add="node.role==worker" demo_app
+#docker service create --constraint="node.labels.data_node==true" --name=db --publish=5432:5432 postgres:9.4
+#docker node update --label-add="data_node=true" vbox-01
+#docker service create --limit-cpu=1 --limit-memory=1G --reserve-memory=2G --name=big_one nginx:1.10(Memory 4g yi geçemez, Ve 8G lik node bulursa çalışır olmadan çalışmaz)
+#echo "ConnectionString=ABC" | docker config create conn_str - (- işateti ve | standart inputtan alıyor)
+#echo "Q29ubmVjdGlvblN0cmluZz1BQkMK" | base64 -d
+#docker exec -it 9fcc0de6023a bash cat /conn_str
+#source ~/.digitialocean_apitoken (Dosya envi a kayanak gösteriliyor.)
+#docker swarm  init --advertise-addr 10.0.1.4
+#ELK () Splunk() etcd(register ve health check,cofiguration render ediyor.)
+#jmeter (yük testi yapıyor.)
+#grafana (monitöring tool) 
+#docker run--> docker service dönüştü swarm ile???
+#orchestrator un amacı servisle x/x rakamlarını eşitlemek duran hata veren service leri tekrar başlatıyor. 
+#docker service update (Komutu ile çalışan container da durudurmadan kill ve restart etmeden değişiklik yapabiliyoruz.(cpu,ram,değişken, Limit koyma yükseltme azaltma))
+#
+ docker run -d -p 9000:9000 --restart always -v /var/run/docker.sock:/var/run/docker.sock -v /opt/portainer:/data portainer/portainer
+ docker service create \
+    --name portainer \
+    --publish 9000:9000 \
+    --constraint 'node.role == manager' \
+    --mount type=bind,src=//var/run/docker.sock,dst=/var/run/docker.sock \
+    portainer/portainer \
+    -H unix:///var/run/docker.sock
+	
+--------------Multiple host node Ders58-----------------------------
+https://labs.play-with-docker.com/
+
+docker swarm init
+docker-machine create node1
+docker-machine ssh node1
+docker-machine env node1
+	
+docker service create \
+  --name=vizuYns \
+  --publish=9009:8080/tcp \
+  --constraint=node.role==manager \
+  --mount=type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
+  dockersamples/visualizer
+
+  
+  -----------------------------
+  
+  docker service create \
+    --name rabbit-1 \
+    --network ingress \
+    -e RABBITMQ_SETUP_DELAY=120 \
+    -e RABBITMQ_USER=admin \
+    -e RABBITMQ_PASSWORD=adminpwd \
+    -e RABBITMQ_CLUSTER_NODES='rabbit@rabbit-2 rabbit@rabbit' \
+    --constraint node.labels.rabbitmq==1 \
+    --mount type=bind,source=/data/rabbitmq-1,target=/var/lib/rabbitmq \
+    -e RABBITMQ_NODENAME=rabbit@rabbit-1 \
+    -e RABBITMQ_ERLANG_COOKIE=a-little-secret \
+    -e RABBITMQ_FIREHOSE_QUEUENAME=trace \
+    -e RABBITMQ_FIREHOSE_ROUTINGKEY=publish.#  rabbitmq
+	
+	
+---------------
+docker service create --name rabbitmq  -e RABBITMQ_ERLANG_COOKIE='ilovebeam' -e RABBITMQ_USER=admin -e RABBITMQ_PASSWORD=adminpwd --mount type=bind,source=/data/rabbitmq-1,target=/var/lib/rabbitmq  rabbitmq
+docker run -d --hostname my-rabbit --name some-rabbit -p 8081:15672 rabbitmq:3-management
+docker service create --hostname my-rabbit --name some-rabbit -p 8081:15672 rabbitmq:3-management
+---------------Ders59--------------------
+docker network create --driver overlay ynsOverlay
+docker service create --name psql --network ynsOverlay -e POSTGRES_PASSWORD=parola postgres
+
+--------------Ders 60 ------------------------
+Routing Mesh
+docker network create -d overlay backend
+docker service create --name db --network backend --mount type=volume,source=db-data,target=/var/lib/postgresql/data postgres:9.4
+
+-------Ders63 Stacks----------------
+Stacks compose dosyalarını kabul ediyor. Build işlemelerine artık compose bakmıyor. Swarm deploy işini yapıyor.
+#docker stack deploy -c ornek.yml testapp (yml dosyasında herhangi bir değişiklik yapılınca  tekrar deploy yapıyoruz.)
+------Ders 64 secreet storage----------------
+Docker 1.3.0 swarm raft DB diskte encrypted olarak bulunuyor.
+#docker secret create psql_user parola.txt 
+#echo "testparola" | docker secret create testpwd - 
+#docker service create --name psql --secret psql_user --secret psql_pass -e POSTGRES_PASSWORD_FILE=/run/secrets/psql_pass -e POSTGRES_USER_FILE=/run/secrets/psql_user postgres
+#docker service update --secreet-rm
+----Ders 66 secreet with stack--------
+#docker service create --name search --replicas 3 -p 9200:9200 elasticsearch:2
+#docker-compose exec psql cat /run/secrets/psql_user
+#docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d 
+#docker service update --image myapp:1.2.1 servisIsmi
+#docker service update --env-add NODE_ENV=production --publish-rm 8080
+#docker service scale web=8 api=6 (2 servisin replica sayısını değiştir.)
+------Ders 71 service updates--------------
+#Portları servis portlarını değiştiremeyiz.????
+#docker service update --publish-rm 8080 --publish-add 9090:80
+--------Ders Docker Healthchecks-------------
+Container status: starting,healthy,unhealthy
+#docker run --health-cmd="curl -f localhost:9200/_cluster/health || false" \
+--health-interval=5s \
+--health-retries=3 \
+--health-timeout=2s \
+--health-start-period=15s \
+elasticsearch:2
+
+--interval=DURATION (default:30s)
+--timeout=DURATION (default 30s)
+--start-period=DURATION (default : 0s) ()
+--retries=N (default: 3)
+
+docker container run --name p1 -d --health-cmd="pg_isready -U postgres || exit 1" postgres
+docker service create --name p2 -d --health-cmd="pg_isready -U postgres || exit 1" postgres
+
+----Ders73 docer hub-------------
+#docker container run -d -p 5000:5000 --name registry registry
+#docker tag hello-world 127.0.0.1:5000/hello-world
+#docker push 127.0.0.1:5000/hello-world
+#docker service update --publish-add 80:80  nginix_one
+#docker run -d -p 5000:5000 --restart always --name registry registry
+
+-----------Ders1 Swarm---------------------
+#docker-machine ssh node1
+#docker-machine env node1
+#docker node update --role manager node2
+#docker swarm join-token manager
+#docker service create --name search --replicas 3 -p 9200:9200 elasticsearch
+
+docker network create --driver=overlay backend
+docker network create --driver=overlay frontend
+docker volume create  db-data
+ 
+docker service create --name redis \
+--network frontend \
+redis:3.2
+ 
+docker service create --name vote \
+--publish 80:80 \
+--network frontend \
+--replicas 2 \
+dockersamples/examplevotingapp_vote:before
+ 
+docker service create --name db \
+--mount type=volume,source=db-data,target=/var/lib/postgresql/data \
+--network backend \
+postgres:9.4
+ 
+docker service create --name worker \
+--network backend \
+--network frontend \
+dockersamples/examplevotingapp_worker
+ 
+docker service create --name result \
+--network backend \
+--publish 5001:80 \
+dockersamples/examplevotingapp_result:before
+
+
+-----Stacksexample.yaml----------------------------------
+version: "3"
+services:
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379"
+    networks:
+      - frontend
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+  db:
+    image: postgres:9.4
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+  vote:
+    image: dockersamples/examplevotingapp_vote:before
+    ports:
+      - 5000:80
+    networks:
+      - frontend
+    depends_on:
+      - redis
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+      restart_policy:
+        condition: on-failure
+  result:
+    image: dockersamples/examplevotingapp_result:before
+    ports:
+      - 5001:80
+    networks:
+      - backend
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  worker:
+    image: dockersamples/examplevotingapp_worker
+    networks:
+      - frontend
+      - backend
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels: [APP=VOTING]
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      placement:
+        constraints: [node.role == manager]
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8080:8080"
+    stop_grace_period: 1m30s
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  db-data:
+-------------------------------------  secreet service----------------------
+#docker secret create psql_user psqluser.txt
+#docker secret inspect psql_user (parolayı göstermez)
+#docker service update --secret-rm
+-----------------secreet with stack ---------------
+#docker stack deploy -c docker-compose.yml mydb
+-----Docker compose secret-----------------------
+docker-compose exec psql cat /run/secrets/psql_user
+
+docker service create \
+       --name jenkins-master \
+       --mount type=bind,target=/var/run/docker.sock,src=/var/run/docker.sock \
+       --publish 50000:50000 \
+       --publish 8086:8080 \
+       --replicas 2 \
+       jenkins  
+docker exec 250a844af852 cat /var/jenkins_home/secrets/initialAdminPassword
+----------------------------
+docker service create \
+  --name my-serviceWeb \
+  --replicas 1 \
+  --mount type=volume,source=my-volume,destination=/path/in/container,volume-label="color=red",volume-label="shape=round" \
+  nginx
+  
+  
+  
+ nvidia-docker run -d -it nvidia/cuda
+  nvidia-docker service create --runtime=nvidia -d -it nvidia/cuda
+ 
+ // docker install
+
+ 
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+docker ps
+sudo apt-get update
+sudo apt-cache madison docker-ce
+sudo apt-get install docker-ce=18.03.1~ce-0~ubuntu
+
+
+docker run -it -p 8888:8888 -d tensorflow/tensorflow
+
+docker run -it --rm --name tf -v ~/mywork:/notebooks -p 8888:8888 -p 6006:6006 tensorflow/tensorflow
+
+
+
+Docker Komutları
+Docker komutları
+
+docker pull : docker hub üzerindeki imajı sistemimize çekmek için.
+
+Örnek:
+
+ducker pull debian
+
+docker run: daha önce sisteme indirilmiş yada hazır olan imajı çalıştırmak için.
+
+Örnek:
+
+docker run -v $(pwd)/dosyalar:/home/dosyalar -p 8080:80 -it --name containeradi ubuntu
+
+yukarıdaki komut ile ilgili açıklama yapmak gerekirse daha önceden pull edilmiş ubuntu imajı çalıştırılacak fakat aşağıdaki özellikler geçerli olacak:
+
+-v: Çalıştırılan docker container üzerinde bir klasör map edilecek ve şuanki directory üzerindeki dosyalar klasörü ile container üzerindeki /home/dosyalar klasörü içerik bakımından aynı olacaklar.
+
+-it: Docker’in mantığı foreground üzerinde hep bir uygulamanın çalışması olduğu için sadece ubuntuyu çalıştırınca ön planda her hangi bir servis çalışmadığı için durdurulacaktır. Bu yüzden /bin/bash’e atarak sanki terminalde bekliyormuşçasına bekletebiliyoruz.
+
+-i: Containerların standart inputunu açar.
+
+-t: Açık STDIN’e tty bağlar.
+
+-d: anahtarı container’ı arkaplanda çalıştırır.
+
+-p: port açmak için kullanılır. 8080:80 yazdığımızda bilgisayarımızdaki 8080 portunu dockerdaki 80 portuna yönlendirir.
+
+--name: run işleminin ardından docker container adının kullanıcı tarafından verilmesi identification bakımından iyi olacaktır. Verilmemiş ise Docker random bir isim tanımlamaktadır.
+
+docker build: Docker build aslında bir Dockerfile üzerinden çalıştırılır. Yani kısaca özetlemek gerekirse Docker üzerinde bir imajınız olsun istiyorsunuz ve çalıştırılır çalıştırılmaz belirli uygulamaları indirmesini ve run etmesini istiyorsunuz diyelim. Docker file oluşturup, gerekli dosyaları kopyalatıp bunun üzerinden yeni bir imaj oluşturabiliyorsunuz.
+
+Örnek:
+
+docker build –no-cache -t imajintagadi .
+
+–no-cache: Build sırasında bazen sorunlar çıkabiliyor, ve Docker son ana kadar olan state’i önbelleğe alıyor ve daha hızlı bir build sağlanmış olabiliyor fakat bazı sıkıntılara da sebep olabiliyor. Bu yüzden cache kapatılabiliyor.
+
+-t: oluşturulacak imaja bir tag vermek için kullanılır.
+
+docker commit: Bu komut ile hazırda çalışan bir container’iniz var ise onu başka yerlerde çalışabilecek bir imaja dönüştürebiliyorsunuz.
+
+Örnek:
+
+docker commit c3f279d17e0a sehmusgokce/testimage:version3
+
+Yukarıdaki komut ile c3f279d17e0a id’li container sehmusgokce kullanıcısının testimage adlı imajının versiyon3’ü olarak taglenecektir.
+
+docker exec: bu komut ile container üzerinde shell komutu çalıştırabiliyorsunuz. Ayrıca istenirse shell’ine bile düşülebiliyor.
+
+Örnek:
+
+docker exec -it <container adi> /bin/bash
+
+docker images: docker imajlarını listeler.
+
+docker ps: docker da çalışan container ları listeler.
+
+-a: parametresi ile kullanılırsa çalışan ve durdurulmuş olan container da listeler.
+
+docker rm: container silmek için kullanılır.
+
+Örnek:
+
+docker rm webserver
+
+docker rmi: imajı silmek için kullanılır.
+
+Örnek:
+
+docker rmi ubuntu
+
+docker start: docker ps -a ile baktığımızda container listemizde daha önce durduğumuz bir container ‘ı tekrar çalıştırmak istiyorsak bu komutu kullanabiliriz.
+
+docker stop: çalışan container’ı durdurmak için kullanılır.
+
+Örnek:
+
+docker start webserver
+
+docker attach: Bu container konsoluna attach ile bağlanabiliriz.
+
+Örnek:
+
+docker attach webserver
+
+docker logs: Container da çalışan servisin konsola bastığı çıktıyı gösterir.
+
+-ft: tail gibi canlı çıktısını görürüz.
+
+Örnek:
+
+docker logs -ft ping_sunucusu
+
+docker inspect: container hakkında detaylı bilgi verir.
+
+Örnek:
+
+docker inspect webserver
+
+docker-machine ip: docker makinasının ip adresini verir.
+
+docker top: container içinde çalışan processleri listeler.
+
+Örnek:
+
+docker top webserver
+
+docker login: docker hub da login olabilmek için.
+
+docker search: docker hub da arama yapmak için.
+
+docker rename: docker container adını değiştirir.
+
+Örnek:
+
+docker rename <eski isim> <yeni isim>
+
+Docker Machine Komutları
+
+docker-machine create: yeni bir sanal makina oluşturmak için kullanılır.
+
+--driver: sanal makina oluştururken kullanılacak olan driver.
+
+Örnek:
+
+docker-machine create --driver virtualbox dev
+
+docker-machine ls: sanal makinaların listesini verir.
+
+docker-machine start: sanal makinayı başlatır.
+
+docker-machine stop: sanal makinayı durdurur.
+
+docker-machine rm: önceden oluşturulan sanal makinayı kaldırır.
+
+-f: kaldırma işlemi için zorlar.
+
+-y: kaldırma işlemi için onaylıyormusunuz adımını otomatik onaylar.
+
+docker-machine ip: sanal makinanın ip adresini verir.
+
+Çıktı:
+
+192.168.99.100
+
+-----------------------------------------------------------
+FROM microsoft/dotnet:2.0-runtime AS base
+WORKDIR /app
+
+FROM microsoft/dotnet:2.0-sdk AS build
+
+COPY . .
+
+RUN dotnet restore CS.ATS.RabbitMQ.Consume/CS.ATS.RabbitMQ.Consume.csproj
+
+WORKDIR /CS.ATS.RabbitMQ.Consume
+RUN dotnet build CS.ATS.RabbitMQ.Consume.csproj -c Release -o /app
+
+FROM build AS publish
+RUN dotnet publish CS.ATS.RabbitMQ.Consume.csproj -c Release -o /app
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app .
+ENTRYPOINT ["dotnet", "CS.ATS.RabbitMQ.Consume.dll"]
+
+-----------------------------------------------------
+docker build 
+
+
